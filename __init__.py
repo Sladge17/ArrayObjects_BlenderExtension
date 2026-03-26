@@ -11,9 +11,17 @@ class OBJECT_OT_object_multiplier(Operator):
     bl_description = "Create array of objects"
     bl_options = {'REGISTER', 'UNDO'}
 
-    count: IntProperty(name="Count", min=0)
-    value: FloatProperty(name="Value")
     x: BoolProperty(name="X")
+    y: BoolProperty(name="Y")
+    z: BoolProperty(name="Z")
+
+    count_x: IntProperty(name="Count_X", min=0)
+    count_y: IntProperty(name="Count_Y", min=0)
+    count_z: IntProperty(name="Count_Z", min=0)
+
+    value_x: FloatProperty(name="Value X")
+    value_y: FloatProperty(name="Value Y")
+    value_z: FloatProperty(name="Value Z")
 
 
     @classmethod
@@ -37,15 +45,87 @@ class OBJECT_OT_object_multiplier(Operator):
         self.value = 0.0
 
 
+    def draw(self, context):
+        row_axis = self.layout.row()
+        column_x = self.layout.column()
+        column_y = self.layout.column()
+        column_z = self.layout.column()
+
+        row_axis.prop(self, 'x')
+        row_axis.prop(self, 'y')
+        row_axis.prop(self, 'z')
+
+        if self.x:
+            column_x.label(text="Axis X")
+            column_x.prop(self, 'count_x')
+            column_x.prop(self, 'value_x')
+
+        if self.y:
+            column_y.label(text="Axis Y")
+            column_y.prop(self, 'count_y')
+            column_y.prop(self, 'value_y')
+
+        if self.z:
+            column_z.label(text="Axis Z")
+            column_z.prop(self, 'count_z')
+            column_z.prop(self, 'value_z')
+
+
+    def _get_object_copy(self, target_object):
+        obj = bpy.data.objects.new(target_object.name, target_object.data.copy())
+        obj.location = target_object.location
+        obj.rotation_euler = target_object.rotation_euler
+        obj.scale = target_object.scale
+        return obj
+    
+    
+    def _get_oblect_copies_x(self, target_objects):
+        copies = []
+        for target_object in target_objects:
+            for i in range(1, self.count_x):
+                obj = self._get_object_copy(target_object)
+                obj.location.x += self.value_x * i
+                bpy.data.collections['Collection'].objects.link(obj)
+                copies.append(obj)
+
+        return copies
+
+
+    def _get_oblect_copies_y(self, target_objects):
+        copies = []
+        for target_object in target_objects:
+            for i in range(1, self.count_y):
+                obj = self._get_object_copy(target_object)
+                obj.location.y += self.value_y * i
+                bpy.data.collections['Collection'].objects.link(obj)
+                copies.append(obj)
+
+        return copies
+
+
+    def _get_oblect_copies_z(self, target_objects):
+        copies = []
+        for target_object in target_objects:
+            for i in range(1, self.count_z):
+                obj = self._get_object_copy(target_object)
+                obj.location.z += self.value_z * i
+                bpy.data.collections['Collection'].objects.link(obj)
+                copies.append(obj)
+
+        return copies
+
+
+
     def execute(self, context):
-        selected_object = context.selected_objects[0]
-        for i in range(self.count):
-            obj = bpy.data.objects.new(selected_object.name, selected_object.data.copy())
-            obj.location = selected_object.location
-            obj.rotation_euler = selected_object.rotation_euler
-            obj.scale = selected_object.scale
-            obj.location.x += self.value * (i + 1)
-            bpy.data.collections['Collection'].objects.link(obj)
+        target_objects = [context.active_object]
+        if self.x:
+            target_objects += self._get_oblect_copies_x(target_objects)
+
+        if self.y:
+            target_objects += self._get_oblect_copies_y(target_objects)
+
+        if self.z:
+            target_objects += self._get_oblect_copies_z(target_objects)
 
         return {'FINISHED'}
 
