@@ -11,13 +11,15 @@ class OBJECT_OT_object_multiplier(Operator):
     bl_description = "Create array of objects"
     bl_options = {'REGISTER', 'UNDO'}
 
+    instance: BoolProperty(name="Instance")
+
     x: BoolProperty(name="X")
     y: BoolProperty(name="Y")
     z: BoolProperty(name="Z")
 
-    count_x: IntProperty(name="Count_X", min=0)
-    count_y: IntProperty(name="Count_Y", min=0)
-    count_z: IntProperty(name="Count_Z", min=0)
+    count_x: IntProperty(name="Count_X", min=1, default=1)
+    count_y: IntProperty(name="Count_Y", min=1, default=1)
+    count_z: IntProperty(name="Count_Z", min=1, default=1)
 
     value_x: FloatProperty(name="Value X")
     value_y: FloatProperty(name="Value Y")
@@ -34,18 +36,27 @@ class OBJECT_OT_object_multiplier(Operator):
             cls.poll_message_set("Object not selected")
             return False
 
-        cls.count = 0
-        cls.value = 0.0
         return True
 
 
     def __init__(self, context):
         super().__init__(context)
-        self.count = 0
-        self.value = 0.0
+        self.x = False
+        self.y = False
+        self.z = False
+
+        self.count_x = 1
+        self.count_y = 1
+        self.count_z = 1
+
+        self.value_x = 0.0
+        self.value_y = 0.0
+        self.value_z = 0.0
 
 
     def draw(self, context):
+        self.layout.prop(self, 'instance')
+
         row_axis = self.layout.row()
         column_x = self.layout.column()
         column_y = self.layout.column()
@@ -72,7 +83,11 @@ class OBJECT_OT_object_multiplier(Operator):
 
 
     def _get_object_copy(self, target_object):
-        obj = bpy.data.objects.new(target_object.name, target_object.data.copy())
+        if self.instance:
+            obj = bpy.data.objects.new(target_object.name, target_object.data)
+        else:
+            obj = bpy.data.objects.new(target_object.name, target_object.data.copy())
+
         obj.location = target_object.location
         obj.rotation_euler = target_object.rotation_euler
         obj.scale = target_object.scale
