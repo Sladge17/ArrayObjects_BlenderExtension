@@ -6,11 +6,12 @@ import bpy
 
 
 class OBJECT_OT_objects_array(Operator):
-    bl_idname = "object.object_multiplier"
-    bl_label = "Object multiplier"
+    bl_idname = "object.objects_array"
+    bl_label = "Objects array"
     bl_description = "Create array of objects"
     bl_options = {'REGISTER', 'UNDO'}
 
+    copy: BoolProperty(name="Copy")
     instance: BoolProperty(name="Instance")
 
     increment_x: BoolProperty(name="increment X", default=True)
@@ -41,7 +42,11 @@ class OBJECT_OT_objects_array(Operator):
 
     def __init__(self, context):
         super().__init__(context)
-
+        self.copy = True
+        self.instance = False
+        self.copy_prev = self.copy
+        self.instance_prev = self.instance
+        
         self.increment_x = True
         self.increment_y = True
         self.increment_z = True
@@ -55,8 +60,38 @@ class OBJECT_OT_objects_array(Operator):
         self.value_z = 0.0
 
 
+    def check(self, context):
+        if self.copy == False and self.copy_prev == True:
+            self.copy = True
+
+        if self.copy == True and self.copy_prev == False:
+            self.copy_prev = True
+            self.instance = False
+            self.instance_prev = False
+
+        if self.instance == False and self.instance_prev == True:
+            self.instance = True
+
+        if self.instance == True and self.instance_prev == False:
+            self.instance_prev = True
+            self.copy = False
+            self.copy_prev = False
+
+
     def draw(self, context):
-        self.layout.prop(self, 'instance')
+        row_instance = self.layout.row(align=True)
+        row_instance.prop(
+            self,
+            'copy',
+            text="Copy",
+            toggle=1,
+        )
+        row_instance.prop(
+            self,
+            'instance',
+            text="Instance",
+            toggle=1,
+        )
 
         column_x = self.layout.column()
         column_y = self.layout.column()
@@ -160,7 +195,7 @@ class VIEW3D_PT_objects_array(Panel):
 
     def draw(self, context):
         self.layout.operator(
-            operator="object.object_multiplier",
+            operator="object.objects_array",
             text="Set array",
         )
 
