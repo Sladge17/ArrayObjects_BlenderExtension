@@ -5,7 +5,7 @@ from bpy.props import IntProperty, FloatProperty, BoolProperty
 import bpy
 
 
-class OBJECT_OT_object_multiplier(Operator):
+class OBJECT_OT_objects_array(Operator):
     bl_idname = "object.object_multiplier"
     bl_label = "Object multiplier"
     bl_description = "Create array of objects"
@@ -13,13 +13,13 @@ class OBJECT_OT_object_multiplier(Operator):
 
     instance: BoolProperty(name="Instance")
 
-    x: BoolProperty(name="X")
-    y: BoolProperty(name="Y")
-    z: BoolProperty(name="Z")
+    increment_x: BoolProperty(name="increment X", default=True)
+    increment_y: BoolProperty(name="increment Y", default=True)
+    increment_z: BoolProperty(name="increment Z", default=True)
 
-    count_x: IntProperty(name="Count_X", min=1, default=1)
-    count_y: IntProperty(name="Count_Y", min=1, default=1)
-    count_z: IntProperty(name="Count_Z", min=1, default=1)
+    count_x: IntProperty(name="Count X", min=1, default=1)
+    count_y: IntProperty(name="Count Y", min=1, default=1)
+    count_z: IntProperty(name="Count Z", min=1, default=1)
 
     value_x: FloatProperty(name="Value X")
     value_y: FloatProperty(name="Value Y")
@@ -41,9 +41,10 @@ class OBJECT_OT_object_multiplier(Operator):
 
     def __init__(self, context):
         super().__init__(context)
-        self.x = False
-        self.y = False
-        self.z = False
+
+        self.increment_x = True
+        self.increment_y = True
+        self.increment_z = True
 
         self.count_x = 1
         self.count_y = 1
@@ -57,29 +58,24 @@ class OBJECT_OT_object_multiplier(Operator):
     def draw(self, context):
         self.layout.prop(self, 'instance')
 
-        row_axis = self.layout.row()
         column_x = self.layout.column()
         column_y = self.layout.column()
         column_z = self.layout.column()
 
-        row_axis.prop(self, 'x')
-        row_axis.prop(self, 'y')
-        row_axis.prop(self, 'z')
+        column_x.label(text="Axis X")
+        column_x.prop(self, 'increment_x')
+        column_x.prop(self, 'count_x')
+        column_x.prop(self, 'value_x')
 
-        if self.x:
-            column_x.label(text="Axis X")
-            column_x.prop(self, 'count_x')
-            column_x.prop(self, 'value_x')
+        column_y.label(text="Axis Y")
+        column_y.prop(self, 'increment_y')
+        column_y.prop(self, 'count_y')
+        column_y.prop(self, 'value_y')
 
-        if self.y:
-            column_y.label(text="Axis Y")
-            column_y.prop(self, 'count_y')
-            column_y.prop(self, 'value_y')
-
-        if self.z:
-            column_z.label(text="Axis Z")
-            column_z.prop(self, 'count_z')
-            column_z.prop(self, 'value_z')
+        column_z.label(text="Axis Z")
+        column_z.prop(self, 'increment_z')
+        column_z.prop(self, 'count_z')
+        column_z.prop(self, 'value_z')
 
 
     def _get_object_copy(self, target_object):
@@ -96,10 +92,15 @@ class OBJECT_OT_object_multiplier(Operator):
     
     def _get_oblect_copies_x(self, target_objects):
         copies = []
+        if self.count_x == 1 or self.increment_x:
+            increment_x = self.value_x
+        else:
+            increment_x = self.value_x / (self.count_x - 1)
+
         for target_object in target_objects:
             for i in range(1, self.count_x):
                 obj = self._get_object_copy(target_object)
-                obj.location.x += self.value_x * i
+                obj.location.x += increment_x * i
                 bpy.data.collections['Collection'].objects.link(obj)
                 copies.append(obj)
 
@@ -108,10 +109,15 @@ class OBJECT_OT_object_multiplier(Operator):
 
     def _get_oblect_copies_y(self, target_objects):
         copies = []
+        if self.count_y == 1 or self.increment_y:
+            increment_y = self.value_y
+        else:
+            increment_y = self.value_y / (self.count_y - 1)
+
         for target_object in target_objects:
             for i in range(1, self.count_y):
                 obj = self._get_object_copy(target_object)
-                obj.location.y += self.value_y * i
+                obj.location.y += increment_y * i
                 bpy.data.collections['Collection'].objects.link(obj)
                 copies.append(obj)
 
@@ -120,37 +126,36 @@ class OBJECT_OT_object_multiplier(Operator):
 
     def _get_oblect_copies_z(self, target_objects):
         copies = []
+        if self.count_z == 1 or self.increment_z:
+            increment_z = self.value_z
+        else:
+            increment_z = self.value_z / (self.count_z - 1)
+
         for target_object in target_objects:
             for i in range(1, self.count_z):
                 obj = self._get_object_copy(target_object)
-                obj.location.z += self.value_z * i
+                obj.location.z += increment_z * i
                 bpy.data.collections['Collection'].objects.link(obj)
                 copies.append(obj)
 
         return copies
 
 
-
     def execute(self, context):
         target_objects = [context.active_object]
-        if self.x:
-            target_objects += self._get_oblect_copies_x(target_objects)
-
-        if self.y:
-            target_objects += self._get_oblect_copies_y(target_objects)
-
-        if self.z:
-            target_objects += self._get_oblect_copies_z(target_objects)
+        target_objects += self._get_oblect_copies_x(target_objects)
+        target_objects += self._get_oblect_copies_y(target_objects)
+        target_objects += self._get_oblect_copies_z(target_objects)
 
         return {'FINISHED'}
 
 
 
-class VIEW3D_PT_object_multiplier(Panel):
+class VIEW3D_PT_objects_array(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Array tools"
-    bl_label = "Object multiplier"
+    bl_label = "Objects array"
 
 
     def draw(self, context):
@@ -162,13 +167,13 @@ class VIEW3D_PT_object_multiplier(Panel):
 
 
 def register():
-    register_class(OBJECT_OT_object_multiplier)
-    register_class(VIEW3D_PT_object_multiplier)
+    register_class(OBJECT_OT_objects_array)
+    register_class(VIEW3D_PT_objects_array)
 
 
 def unregister():
-    unregister_class(VIEW3D_PT_object_multiplier)
-    unregister_class(OBJECT_OT_object_multiplier)
+    unregister_class(VIEW3D_PT_objects_array)
+    unregister_class(OBJECT_OT_objects_array)
 
 
 
