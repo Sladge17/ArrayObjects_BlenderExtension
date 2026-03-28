@@ -1,13 +1,13 @@
-from bpy.types import Operator, Panel
+from bpy.types import Operator, VIEW3D_PT_tools_active
 from bpy.utils import register_class, unregister_class
 from bpy.props import IntProperty, FloatProperty, BoolProperty
 
 import bpy
 
 
-class OBJECT_OT_objects_array(Operator):
-    bl_idname = "object.objects_array"
-    bl_label = "Objects array"
+class OBJECT_OT_array_objects(Operator):
+    bl_idname = "object.array_objects"
+    bl_label = "Array objects"
     bl_description = "Create array of objects"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -186,29 +186,25 @@ class OBJECT_OT_objects_array(Operator):
 
 
 
-class VIEW3D_PT_objects_array(Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Array tools"
-    bl_label = "Objects array"
-
-
-    def draw(self, context):
-        self.layout.operator(
-            operator="object.objects_array",
-            text="Set array",
-        )
-
+def add_button_array(self, context):
+    row = self.layout.row()
+    row.scale_x = 2.0
+    row.scale_y = 2.0
+    row.operator(
+        OBJECT_OT_array_objects.bl_idname,
+        text="",
+        icon='MOD_ARRAY',
+    )
 
 
 def register():
-    register_class(OBJECT_OT_objects_array)
-    register_class(VIEW3D_PT_objects_array)
+    register_class(OBJECT_OT_array_objects)
+    VIEW3D_PT_tools_active.append(add_button_array)
 
 
 def unregister():
-    unregister_class(VIEW3D_PT_objects_array)
-    unregister_class(OBJECT_OT_objects_array)
+    VIEW3D_PT_tools_active.remove(add_button_array)
+    unregister_class(OBJECT_OT_array_objects)
 
 
 
