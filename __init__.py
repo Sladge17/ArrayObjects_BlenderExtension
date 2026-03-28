@@ -33,11 +33,11 @@ class OBJECT_OT_array_objects(Operator):
     @classmethod
     def poll(cls, context) -> bool:
         if not context.mode == 'OBJECT':
-            cls.poll_message_set("Working mode is not OBJECT")
+            cls.poll_message_set("Interaction mode is not OBJECT")
             return False
         
         if not len(context.selected_objects):
-            cls.poll_message_set("Object not selected")
+            cls.poll_message_set("Objects not selected")
             return False
 
         return True
@@ -286,11 +286,10 @@ class OBJECT_OT_array_objects(Operator):
 
 
     def execute(self, context):
-        target_objects = [context.active_object]
+        target_objects = context.selected_objects
         target_objects += self._get_oblect_copies_x(target_objects)
         target_objects += self._get_oblect_copies_y(target_objects)
         target_objects += self._get_oblect_copies_z(target_objects)
-
         return {'FINISHED'}
 
 
