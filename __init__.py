@@ -8,22 +8,25 @@ import bpy
 class OBJECT_OT_array_objects(Operator):
     bl_idname = "object.array_objects"
     bl_label = "Array objects"
-    bl_description = "Create array of objects"
+    bl_description = "Create array of selected objects"
     bl_options = {'REGISTER', 'UNDO'}
 
     copy: BoolProperty(name="Copy")
     instance: BoolProperty(name="Instance")
 
-    increment_x: BoolProperty(name="increment X", default=True)
-    increment_y: BoolProperty(name="increment Y", default=True)
-    increment_z: BoolProperty(name="increment Z", default=True)
-
-    count_x: IntProperty(name="Count X", min=1, default=1)
-    count_y: IntProperty(name="Count Y", min=1, default=1)
-    count_z: IntProperty(name="Count Z", min=1, default=1)
-
+    increment_x: BoolProperty(name="increment X")
+    total_x: BoolProperty(name="total X")
+    count_x: IntProperty(name="Count X", min=1)
     value_x: FloatProperty(name="Value X")
+
+    increment_y: BoolProperty(name="increment Y")
+    total_y: BoolProperty(name="total Y")
+    count_y: IntProperty(name="Count Y", min=1)
     value_y: FloatProperty(name="Value Y")
+
+    increment_z: BoolProperty(name="increment Z")
+    total_z: BoolProperty(name="total Z")
+    count_z: IntProperty(name="Count Z", min=1)
     value_z: FloatProperty(name="Value Z")
 
 
@@ -48,19 +51,28 @@ class OBJECT_OT_array_objects(Operator):
         self.instance_prev = self.instance
         
         self.increment_x = True
-        self.increment_y = True
-        self.increment_z = True
-
+        self.total_x = False
+        self.increment_x_prev = self.increment_x
+        self.total_x_prev = self.total_x
         self.count_x = 1
-        self.count_y = 1
-        self.count_z = 1
-
         self.value_x = 0.0
+
+        self.increment_y = True
+        self.total_y = False
+        self.increment_y_prev = self.increment_y
+        self.total_y_prev = self.total_y
+        self.count_y = 1
         self.value_y = 0.0
+
+        self.increment_z = True
+        self.total_z = False
+        self.increment_z_prev = self.increment_z
+        self.total_z_prev = self.total_z
+        self.count_z = 1
         self.value_z = 0.0
 
 
-    def check(self, context):
+    def _check_copy_instance(self):
         if self.copy == False and self.copy_prev == True:
             self.copy = True
 
@@ -78,39 +90,136 @@ class OBJECT_OT_array_objects(Operator):
             self.copy_prev = False
 
 
+    def _check_increment_total_x(self):
+        if self.increment_x == False and self.increment_x_prev == True:
+            self.increment_x = True
+
+        if self.increment_x == True and self.increment_x_prev == False:
+            self.increment_x_prev = True
+            self.total_x = False
+            self.total_x_prev = False
+
+        if self.total_x == False and self.total_x_prev == True:
+            self.total_x = True
+
+        if self.total_x == True and self.total_x_prev == False:
+            self.total_x_prev = True
+            self.increment_x = False
+            self.increment_x_prev = False
+
+
+    def _check_increment_total_y(self):
+        if self.increment_y == False and self.increment_y_prev == True:
+            self.increment_y = True
+
+        if self.increment_y == True and self.increment_y_prev == False:
+            self.increment_y_prev = True
+            self.total_y = False
+            self.total_y_prev = False
+
+        if self.total_y == False and self.total_y_prev == True:
+            self.total_y = True
+
+        if self.total_y == True and self.total_y_prev == False:
+            self.total_y_prev = True
+            self.increment_y = False
+            self.increment_y_prev = False
+
+
+    def _check_increment_total_z(self):
+        if self.increment_z == False and self.increment_z_prev == True:
+            self.increment_z = True
+
+        if self.increment_z == True and self.increment_z_prev == False:
+            self.increment_z_prev = True
+            self.total_z = False
+            self.total_z_prev = False
+
+        if self.total_z == False and self.total_z_prev == True:
+            self.total_z = True
+
+        if self.total_z == True and self.total_z_prev == False:
+            self.total_z_prev = True
+            self.increment_z = False
+            self.increment_z_prev = False
+
+
+    def check(self, context):
+        self._check_copy_instance()
+        self._check_increment_total_x()
+        self._check_increment_total_y()
+        self._check_increment_total_z()
+
+
     def draw(self, context):
-        row_instance = self.layout.row(align=True)
-        row_instance.prop(
+        row_copy_instance = self.layout.row(align=True)
+        row_copy_instance.prop(
             self,
             'copy',
             text="Copy",
             toggle=1,
         )
-        row_instance.prop(
+        row_copy_instance.prop(
             self,
             'instance',
             text="Instance",
             toggle=1,
         )
 
-        column_x = self.layout.column()
-        column_y = self.layout.column()
-        column_z = self.layout.column()
 
-        column_x.label(text="Axis X")
-        column_x.prop(self, 'increment_x')
-        column_x.prop(self, 'count_x')
-        column_x.prop(self, 'value_x')
+        box_x = self.layout.box()
+        box_x.label(text="Axis X")
+        row_increment_total_x = box_x.row(align=True)
+        row_increment_total_x.prop(
+            self,
+            'increment_x',
+            text="Increment",
+            toggle=1,
+        )
+        row_increment_total_x.prop(
+            self,
+            'total_x',
+            text="Tolal",
+            toggle=1,
+        )
+        box_x.prop(self, 'count_x', text="Count")
+        box_x.prop(self, 'value_x', text="Value")
 
-        column_y.label(text="Axis Y")
-        column_y.prop(self, 'increment_y')
-        column_y.prop(self, 'count_y')
-        column_y.prop(self, 'value_y')
+        box_y = self.layout.box()
+        box_y.label(text="Axis Y")
+        row_increment_total_y = box_y.row(align=True)
+        row_increment_total_y.prop(
+            self,
+            'increment_y',
+            text="Increment",
+            toggle=1,
+        )
+        row_increment_total_y.prop(
+            self,
+            'total_y',
+            text="Tolal",
+            toggle=1,
+        )
+        box_y.prop(self, 'count_y', text="Count")
+        box_y.prop(self, 'value_y', text="Value")
 
-        column_z.label(text="Axis Z")
-        column_z.prop(self, 'increment_z')
-        column_z.prop(self, 'count_z')
-        column_z.prop(self, 'value_z')
+        box_z = self.layout.box()
+        box_z.label(text="Axis Z")
+        row_increment_total_z = box_z.row(align=True)
+        row_increment_total_z.prop(
+            self,
+            'increment_z',
+            text="Increment",
+            toggle=1,
+        )
+        row_increment_total_z.prop(
+            self,
+            'total_z',
+            text="Tolal",
+            toggle=1,
+        )
+        box_z.prop(self, 'count_z', text="Count")
+        box_z.prop(self, 'value_z', text="Value")
 
 
     def _get_object_copy(self, target_object):
